@@ -1,0 +1,14 @@
+{
+    "name": "doctor-recommender-app",
+    "version": "1.0.0",
+    "description": "Full stack doctor recommender application",
+    "scripts": {
+        "start": "concurrently \"npm run client\" \"npm run server\"",
+        "client": "cd client && npm run dev",
+        "server": "cd server && npm run dev",
+        "install-all": "concurrently \"npm install\" \"cd client && npm install\" \"cd server && npm install\""
+    },
+    "devDependencies": {
+        "concurrently": "^7.6.0"
+    }
+}
