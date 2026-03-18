@@ -1,0 +1,67 @@
+# Node modules
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# ─────────────────────────────────────────────────────────
+# 🔐 ENVIRONMENT & SECRET FILES — NEVER COMMIT THESE
+# ─────────────────────────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+
+# ─────────────────────────────────────────────────────────
+# ML Model artifacts (large binary files)
+# ─────────────────────────────────────────────────────────
+server/ml_model/model/artifacts/*.pkl
+server/ml_model/model/*.pkl
+server/ml_model/*.pkl
+server/ml_model/model/artifacts/*.json
+server/ml_model/logs/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Misc
+.git/
+coverage/
+.cache/
+.venv/
+myenv/
+dataset/
+*.pkl
+*.h5
