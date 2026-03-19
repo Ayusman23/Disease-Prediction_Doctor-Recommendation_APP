@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Disease Predictor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #6366f1;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Blob Background */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(79, 70, 229, 0.4);
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(236, 72, 153, 0.4);
+            animation-duration: 25s;
+        }
+
+        @keyframes move {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(50px, -50px) scale(1.1);
+            }
+        }
+
+        /* Layout Container */
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        @media (min-width: 900px) {
+            .main-wrapper {
+                flex-direction: row;
+                align-items: stretch;
+            }
+        }
+
+        /* Glassmorphism Panel */
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+            flex: 1;
+        }
+
+        .map-panel {
+            flex: 0 0 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        div.panel-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        div.panel-header h2 {
+            font-size: 1.4rem;
+            margin: 0 0 5px 0;
+            color: #f8fafc;
+        }
+
+        /* --- BODYMAP SVG STYLES --- */
+        .svg-container {
+            width: 100%;
+            max-width: 250px;
+            margin: 0 auto;
+        }
+
+        #body-map {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
+        }
+
+        .body-part {
+            fill: rgba(71, 85, 105, 0.6);
+            stroke: var(--primary);
+            stroke-width: 2;
+            stroke-linejoin: round;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .body-part:hover {
+            fill: rgba(99, 102, 241, 0.6);
+            stroke: #a5b4fc;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.8));
+        }
+
+        .body-part.active {
+            fill: rgba(236, 72, 153, 0.6);
+            stroke: #fbcfe8;
+            filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.8));
+        }
+
+        /* General / systemic button below bodymap */
+        .general-btn {
+            margin-top: 20px;
+            width: 80%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            color: #c7d2fe;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .general-btn:hover,
+        .general-btn.active {
+            background: rgba(79, 70, 229, 0.3);
+            border-color: #a5b4fc;
+            color: #fff;
+        }
+
+        /* --- RIGHT PANEL STYLES --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-main);
+            text-transform: capitalize;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary);
+        }
+
+        /* Suggested Symptoms container */
+        .suggested-section {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .suggested-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .suggested-title {
+            font-size: 0.9rem;
+            color: #a5b4fc;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .suggested-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Checkbox styling */
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            text-transform: capitalize;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .checkbox-wrapper input[type="checkbox"]:checked {
+            background: var(--primary);
+        }
+
+        .checkbox-wrapper input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            min-height: 40px;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 12px;
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+        }
+
+        .tags-container:empty::before {
+            content: 'Selected symptoms will appear here...';
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .tag {
+            background: rgba(79, 70, 229, 0.2);
+            border: 1px solid var(--primary);
+            color: #c7d2fe;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: scaleIn 0.3s ease;
+            text-transform: capitalize;
+        }
+
+        .tag span {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tag span:hover {
+            color: #fff;
+        }
+
+        /* Button */
+        .predict-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, var(--primary), #ec4899);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        .predict-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Result Area */
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .result-box.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .disease-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #34d399;
+            margin-top: 5px;
+            text-transform: capitalize;
+        }
+
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="main-wrapper">
+        <!-- Body Map Panel (Left) -->
+        <div class="panel map-panel">
+            <div class="panel-header">
+                <h2>Body Map</h2>
+                <p class="subtitle" style="margin-bottom: 10px; font-size: 0.85rem;">Select an area to view symptoms</p>
+            </div>
+
+            <div class="svg-container">
+                <svg id="body-map" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Head & Neck -->
+                    <path id="head" class="body-part"
+                        d="M 100 10 C 120 10, 125 35, 115 50 C 110 58, 108 65, 108 70 L 92 70 C 92 65, 90 58, 85 50 C 75 35, 80 10, 100 10 Z" />
+
+                    <!-- Chest & Upper Back -->
+                    <path id="chest" class="body-part"
+                        d="M 92 70 C 80 75, 60 75, 50 85 C 45 90, 47 110, 50 120 L 150 120 C 153 110, 155 90, 150 85 C 140 75, 120 75, 108 70 Z" />
+
+                    <!-- Abdomen & Pelvis -->
+                    <path id="abdomen" class="body-part"
+                        d="M 50 120 C 47 150, 45 180, 55 200 L 145 200 C 155 180, 153 150, 150 120 Z" />
+
+                    <!-- Left Arm -->
+                    <path id="arms" class="body-part"
+                        d="M 50 85 C 35 90, 25 110, 20 150 C 15 180, 10 210, 15 220 C 20 230, 30 225, 30 215 C 35 180, 45 150, 50 120 Z" />
+
+                    <!-- Right Arm -->
+                    <path id="arms" class="body-part"
+                        d="M 150 85 C 165 90, 175 110, 180 150 C 185 180, 190 210, 185 220 C 180 230, 170 225, 170 215 C 165 180, 155 150, 150 120 Z" />
+
+                    <!-- Left Leg -->
+                    <path id="legs" class="body-part"
+                        d="M 55 200 C 60 250, 65 300, 60 360 C 55 385, 55 395, 70 395 C 80 395, 80 380, 75 360 C 75 300, 95 250, 98 200 Z" />
+
+                    <!-- Right Leg -->
+                    <path id="legs" class="body-part"
+                        d="M 145 200 C 140 250, 135 300, 140 360 C 145 385, 145 395, 130 395 C 120 395, 120 380, 125 360 C 125 300, 105 250, 102 200 Z" />
+                </svg>
+            </div>
+
+            <button id="general" class="general-btn">Full Body / Systemic</button>
+        </div>
+
+        <!-- Predictor Panel (Right) -->
+        <div class="panel">
+            <h1>Predict Disease</h1>
+            <p class="subtitle">Search symptoms or select a body part from the map</p>
+
+            <div class="input-group">
+                <input type="text" id="symptom-input" placeholder="Search for symptoms (e.g., fever, rash)..."
+                    autocomplete="off">
+                <div class="dropdown" id="dropdown"></div>
+            </div>
+
+            <!-- Dynamic Body Part Checkboxes -->
+            <div id="suggested-section" class="suggested-section">
+                <p class="suggested-title">Symptoms: <span id="suggested-region-name" style="color: white;">Head</span>
+                </p>
+                <div class="suggested-grid" id="suggested-grid">
+                    <!-- Checkboxes injected by JS -->
+                </div>
+            </div>
+
+            <div class="tags-container" id="tags"></div>
+
+            <button id="predict-btn" class="predict-btn" disabled>
+                <span id="btn-text">Predict Disease</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+
+            <div class="result-box" id="result-box">
+                <div style="color: var(--text-muted); font-size: 0.9rem;">Model Prediction:</div>
+                <div class="disease-name" id="disease-name"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let allSymptoms = [];
+            let symptomMap = {}; // Maps friendly name -> exact dataset string
+            let selectedSymptoms = [];
+
+            // Hardcoded Symptom Categories Mapping (Roughly maps to body parts)
+            const bodyRegions = {
+                head: [
+                    "headache", "blurred and distorted vision", "redness of eyes", "sunken eyes",
+                    "pain behind the eyes", "dizziness", "altered sensorium", "loss of balance",
+                    "lack of concentration", "visual disturbances", "slurred speech", "loss of smell",
+                    "continuous sneezing", "runny nose", "congestion", "sinus pressure", "patches in throat",
+                    "cough", "throat irritation", "mucoid sputum", "rusty sputum", "blood in sputum",
+                    "phlegm", "ulcers on tongue", "drying and tingling lips", "stiff neck", "neck pain", "yellowing of eyes"
+                ],
+                chest: [
+                    "chest pain", "breathlessness", "fast heart rate", "palpitations"
+                ],
+                abdomen: [
+                    "stomach pain", "acidity", "vomiting", "indigestion", "abdominal pain",
+                    "nausea", "loss of appetite", "constipation", "diarrhoea", "swelling of stomach",
+                    "belly pain", "stomach bleeding", "distention of abdomen", "bladder discomfort",
+                    "continuous feel of urine", "burning micturition", "spotting  urination", "foul smell of urine",
+                    "yellow urine", "dark urine", "polyuria", "passage of gases", "pain in anal region",
+                    "bloody stool", "irritation in anus", "pain during bowel movements", "abnormal menstruation"
+                ],
+                arms: [
+                    "cold hands and feets", "brittle nails", "small dents in nails", "inflammatory nails"
+                ],
+                legs: [
+                    "knee pain", "swollen legs", "prominent veins on calf", "painful walking"
+                ],
+                general: [
+                    "itching", "skin rash", "nodal skin eruptions", "shivering", "chills", "joint pain",
+                    "muscle wasting", "fatigue", "weight gain", "anxiety", "mood swings", "weight loss",
+                    "restlessness", "lethargy", "irregular sugar level", "high fever", "sweating",
+                    "dehydration", "yellowish skin", "back pain", "mild fever", "acute liver failure",
+                    "fluid overload", "swelled lymph nodes", "malaise", "weakness in limbs", "cramps",
+                    "bruising", "obesity", "swollen blood vessels", "puffy face and eyes", "enlarged thyroid",
+                    "swollen extremeties", "excessive hunger", "extra marital contacts", "hip joint pain",
+                    "muscle weakness", "swelling joints", "movement stiffness", "spinning movements",
+                    "unsteadiness", "weakness of one body side", "internal itching", "toxic look (typhos)",
+                    "depression", "irritability", "muscle pain", "red spots over body", "dischromic  patches",
+                    "watering from eyes", "increased appetite", "family history", "receiving blood transfusion",
+                    "receiving unsterile injections", "coma", "history of alcohol consumption", "pus filled pimples",
+                    "blackheads", "scurring", "skin peeling", "silver like dusting", "blister",
+                    "red sore around nose", "yellow crust ooze"
+                ]
+            };
+
+            const input = document.getElementById("symptom-input");
+            const dropdown = document.getElementById("dropdown");
+            const tagsContainer = document.getElementById("tags");
+            const predictBtn = document.getElementById("predict-btn");
+            const btnText = document.getElementById("btn-text");
+            const spinner = document.getElementById("spinner");
+            const resultBox = document.getElementById("result-box");
+            const diseaseNameEl = document.getElementById("disease-name");
+
+            const suggestedSection = document.getElementById("suggested-section");
+            const suggestedGrid = document.getElementById("suggested-grid");
+            const suggestedRegionName = document.getElementById("suggested-region-name");
+
+            // Fetch symptoms from API
+            fetch("/symptoms")
+                .then(res => res.json())
+                .then(data => {
+                    data.symptoms.forEach(orig => {
+                        let display = orig.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+                        symptomMap[display] = orig;
+                        allSymptoms.push(display);
+                    });
+                })
+                .catch(err => {
+                    console.error("Error fetching symptoms:", err);
+                    input.placeholder = "Error loading symptoms. Is backend running?";
+                });
+
+            // --- UI LOGIC ---
+
+            // SVG Click Handling
+            const bodyParts = document.querySelectorAll('.body-part');
+            const generalBtn = document.getElementById('general');
+
+            function handleRegionClick(regionId, prettyName) {
+                // Style Active Elements
+                bodyParts.forEach(bp => bp.classList.remove('active'));
+                generalBtn.classList.remove('active');
+
+                if (regionId === "general") {
+                    generalBtn.classList.add('active');
+                } else {
+                    document.querySelectorAll(`#${regionId}`).forEach(el => el.classList.add('active'));
+                }
+
+                // Show Suggested Section
+                suggestedSection.classList.add('active');
+                suggestedRegionName.textContent = prettyName;
+
+                // Populate Checkboxes
+                const regionSymptoms = bodyRegions[regionId] || [];
+                suggestedGrid.innerHTML = "";
+
+                if (regionSymptoms.length === 0) {
+                    suggestedGrid.innerHTML = "<div style='color: var(--text-muted); font-size: 0.85rem;'>No specific symptoms mapped. Search above.</div>";
+                    return;
+                }
+
+                regionSymptoms.forEach(sym => {
+                    // Check if symptom exists in dataset to avoid mapping errors
+                    if (!allSymptoms.includes(sym)) return;
+
+                    const label = document.createElement('label');
+                    label.className = "checkbox-wrapper";
+
+                    const cb = document.createElement('input');
+                    cb.type = "checkbox";
+                    cb.checked = selectedSymptoms.includes(sym);
+                    cb.addEventListener('change', (e) => {
+                        if (e.target.checked) addSymptom(sym);
+                        else removeSymptom(sym);
+                    });
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = sym;
+
+                    label.appendChild(cb);
+                    label.appendChild(textSpan);
+                    suggestedGrid.appendChild(label);
+                });
+            }
+
+            bodyParts.forEach(part => {
+                part.addEventListener('click', (e) => {
+                    const id = e.target.id;
+                    const nameMap = { head: "Head & Neck", chest: "Chest & Back", arms: "Arms & Hands", abdomen: "Abdomen & Pelvis", legs: "Legs & Feet" };
+                    handleRegionClick(id, nameMap[id] || id);
+                });
+            });
+
+            generalBtn.addEventListener('click', () => {
+                handleRegionClick("general", "Systemic / General / Skin");
+            });
+
+            // Search Bar Logic
+            input.addEventListener("input", (e) => {
+                const val = e.target.value.toLowerCase().trim();
+                dropdown.innerHTML = "";
+
+                if (!val) {
+                    dropdown.classList.remove("active");
+                    return;
+                }
+
+                const matches = allSymptoms.filter(s =>
+                    s.toLowerCase().includes(val) && !selectedSymptoms.includes(s)
+                ).slice(0, 10);
+
+                if (matches.length > 0) {
+                    dropdown.classList.add("active");
+                    matches.forEach(match => {
+                        const div = document.createElement("div");
+                        div.className = "dropdown-item";
+                        const regex = new RegExp(`(${val})`, 'gi');
+                        div.innerHTML = match.replace(regex, "<span style='color: #a78bfa; font-weight: bold;'>$1</span>");
+
+                        div.addEventListener("click", () => {
+                            addSymptom(match);
+                        });
+                        dropdown.appendChild(div);
+                    });
+                } else {
+                    dropdown.classList.remove("active");
+                }
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest('.input-group')) {
+                    dropdown.classList.remove('active');
+                }
+            });
+
+            // Tag Management
+            function addSymptom(symptom) {
+                if (!selectedSymptoms.includes(symptom)) {
+                    selectedSymptoms.push(symptom);
+                    renderTags();
+                    updateCheckboxes();
+                    input.value = "";
+                    dropdown.classList.remove("active");
+                    validateBtn();
+                    resultBox.classList.remove("active");
+                }
+            }
+
+            function removeSymptom(symptom) {
+                selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+                renderTags();
+                updateCheckboxes();
+                validateBtn();
+                resultBox.classList.remove("active");
+            }
+
+            function updateCheckboxes() {
+                // Sycn checkboxes in suggested grid with active tags
+                const cbs = suggestedGrid.querySelectorAll('input[type="checkbox"]');
+                cbs.forEach(cb => {
+                    const txt = cb.nextSibling.textContent;
+                    cb.checked = selectedSymptoms.includes(txt);
+                });
+            }
+
+            function renderTags() {
+                tagsContainer.innerHTML = "";
+                selectedSymptoms.forEach(s => {
+                    const tag = document.createElement("div");
+                    tag.className = "tag";
+                    const safeStr = s.replace(/'/g, "\\'");
+                    tag.innerHTML = `${s} <span onclick="window.removeSymptomRef('${safeStr}')">&times;</span>`;
+                    tagsContainer.appendChild(tag);
+                });
+            }
+
+            window.removeSymptomRef = removeSymptom;
+
+            function validateBtn() {
+                predictBtn.disabled = selectedSymptoms.length === 0;
+            }
+
+            // API Prediction
+            predictBtn.addEventListener("click", async () => {
+                const payloadArray = selectedSymptoms.map(s => symptomMap[s]);
+
+                btnText.style.display = "none";
+                spinner.style.display = "block";
+                predictBtn.disabled = true;
+                resultBox.classList.remove("active", "error");
+
+                try {
+                    const res = await fetch("/predict", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ symptoms: payloadArray })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.prediction) {
+                        diseaseNameEl.textContent = data.prediction.replace(/_/g, ' ');
+                        diseaseNameEl.style.color = "#34d399";
+                    } else if (data.error) {
+                        diseaseNameEl.textContent = "Error: " + data.error;
+                        resultBox.classList.add("error");
+                    }
+                } catch (err) {
+                    diseaseNameEl.textContent = "Connection Error";
+                    resultBox.classList.add("error");
+                } finally {
+                    spinner.style.display = "none";
+                    btnText.style.display = "block";
+                    predictBtn.disabled = false;
+                    resultBox.classList.add("active");
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
